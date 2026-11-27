@@ -41,11 +41,14 @@ public class MainActivity extends Activity {
     private FileRecord pendingExportRecord;
     private NcsdInspector.Partition pendingExportPartition;
 
-    private static final int COLOR_BACKGROUND = Color.rgb(12, 18, 31);
-    private static final int COLOR_CARD = Color.rgb(24, 34, 53);
-    private static final int COLOR_ACCENT = Color.rgb(90, 170, 255);
-    private static final int COLOR_TEXT = Color.rgb(241, 245, 250);
-    private static final int COLOR_MUTED = Color.rgb(174, 187, 205);
+    // Black / yellow / white brand palette.
+    private static final int COLOR_BACKGROUND = Color.rgb(12, 12, 12);      // #0C0C0C
+    private static final int COLOR_CARD = Color.rgb(28, 28, 28);            // #1C1C1C
+    private static final int COLOR_CARD_ALT = Color.rgb(36, 36, 36);        // #242424
+    private static final int COLOR_ACCENT = Color.rgb(255, 214, 0);         // #FFD600
+    private static final int COLOR_BORDER = Color.rgb(75, 65, 12);          // subtle dark gold
+    private static final int COLOR_TEXT = Color.rgb(250, 250, 250);         // near-white
+    private static final int COLOR_MUTED = Color.rgb(185, 185, 185);        // soft gray
 
     private static class FileRecord {
         Uri uri;
@@ -62,6 +65,9 @@ public class MainActivity extends Activity {
     }
 
     private void buildScreen() {
+        getWindow().setStatusBarColor(COLOR_BACKGROUND);
+        getWindow().setNavigationBarColor(COLOR_BACKGROUND);
+
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         scroll.setBackgroundColor(COLOR_BACKGROUND);
@@ -108,9 +114,10 @@ public class MainActivity extends Activity {
 
         Button chooseButton = new Button(this);
         chooseButton.setText("CHOOSE 3DS / CIA / CXI FILES");
-        chooseButton.setTextColor(Color.WHITE);
+        chooseButton.setTextColor(Color.BLACK);
         chooseButton.setAllCaps(false);
         chooseButton.setTextSize(15);
+        chooseButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         chooseButton.setBackground(roundRect(COLOR_ACCENT, 14));
         chooseButton.setOnClickListener(v -> openFilePicker());
         root.addView(chooseButton, new LinearLayout.LayoutParams(-1, dp(54)));
@@ -118,14 +125,14 @@ public class MainActivity extends Activity {
         LinearLayout help = new LinearLayout(this);
         help.setOrientation(LinearLayout.VERTICAL);
         help.setPadding(dp(15), dp(13), dp(15), dp(13));
-        help.setBackground(roundRect(COLOR_CARD, 14));
+        help.setBackground(roundRectStroke(COLOR_CARD, 14, COLOR_BORDER, dp(1)));
         LinearLayout.LayoutParams helpParams = new LinearLayout.LayoutParams(-1, -2);
         helpParams.topMargin = dp(14);
         root.addView(help, helpParams);
 
         TextView helpTitle = new TextView(this);
         helpTitle.setText("How to use");
-        helpTitle.setTextColor(COLOR_TEXT);
+        helpTitle.setTextColor(COLOR_ACCENT);
         helpTitle.setTextSize(15);
         helpTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         help.addView(helpTitle);
@@ -145,7 +152,7 @@ public class MainActivity extends Activity {
 
         statusText = new TextView(this);
         statusText.setText("No files selected yet.");
-        statusText.setTextColor(COLOR_MUTED);
+        statusText.setTextColor(COLOR_ACCENT);
         statusText.setTextSize(13);
         LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, -2);
         statusParams.topMargin = dp(14);
@@ -159,14 +166,14 @@ public class MainActivity extends Activity {
         LinearLayout note = new LinearLayout(this);
         note.setOrientation(LinearLayout.VERTICAL);
         note.setPadding(dp(15), dp(14), dp(15), dp(14));
-        note.setBackground(roundRect(COLOR_CARD, 14));
+        note.setBackground(roundRectStroke(COLOR_CARD, 14, COLOR_BORDER, dp(1)));
         LinearLayout.LayoutParams noteParams = new LinearLayout.LayoutParams(-1, -2);
         noteParams.topMargin = dp(22);
         root.addView(note, noteParams);
 
         TextView noteTitle = new TextView(this);
         noteTitle.setText("Limitations");
-        noteTitle.setTextColor(COLOR_TEXT);
+        noteTitle.setTextColor(COLOR_ACCENT);
         noteTitle.setTextSize(15);
         noteTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         note.addView(noteTitle);
@@ -281,7 +288,7 @@ public class MainActivity extends Activity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setPadding(dp(15), dp(14), dp(15), dp(14));
-        card.setBackground(roundRect(COLOR_CARD, 14));
+        card.setBackground(roundRectStroke(COLOR_CARD, 14, COLOR_BORDER, dp(1)));
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(-1, -2);
         cardParams.bottomMargin = dp(12);
         card.setLayoutParams(cardParams);
@@ -321,7 +328,7 @@ public class MainActivity extends Activity {
         if (record.result != null && !record.result.partitions.isEmpty()) {
             TextView partitionTitle = new TextView(this);
             partitionTitle.setText("Detected NCCH partitions");
-            partitionTitle.setTextColor(COLOR_TEXT);
+            partitionTitle.setTextColor(COLOR_ACCENT);
             partitionTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
             partitionTitle.setTextSize(12);
             LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(-1, -2);
@@ -331,10 +338,11 @@ public class MainActivity extends Activity {
             for (NcsdInspector.Partition partition : record.result.partitions) {
                 Button exportButton = new Button(this);
                 exportButton.setAllCaps(false);
-                exportButton.setTextColor(Color.WHITE);
+                exportButton.setTextColor(COLOR_ACCENT);
                 exportButton.setTextSize(12);
+                exportButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
                 exportButton.setText("Export partition " + partition.index + " • " + NcsdInspector.humanBytes(partition.length));
-                exportButton.setBackground(roundRect(Color.rgb(49, 78, 112), 10));
+                exportButton.setBackground(roundRectStroke(COLOR_CARD_ALT, 10, COLOR_ACCENT, dp(1)));
                 LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(-1, dp(46));
                 buttonParams.topMargin = dp(7);
                 card.addView(exportButton, buttonParams);
@@ -411,6 +419,12 @@ public class MainActivity extends Activity {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(color);
         drawable.setCornerRadius(dp(radiusDp));
+        return drawable;
+    }
+
+    private GradientDrawable roundRectStroke(int color, int radiusDp, int strokeColor, int strokeWidthPx) {
+        GradientDrawable drawable = roundRect(color, radiusDp);
+        drawable.setStroke(Math.max(1, strokeWidthPx), strokeColor);
         return drawable;
     }
 
