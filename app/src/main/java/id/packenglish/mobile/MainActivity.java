@@ -15,6 +15,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -70,21 +71,40 @@ public class MainActivity extends Activity {
         root.setPadding(dp(20), dp(24), dp(20), dp(28));
         scroll.addView(root);
 
+        LinearLayout headerRow = new LinearLayout(this);
+        headerRow.setOrientation(LinearLayout.HORIZONTAL);
+        headerRow.setGravity(Gravity.CENTER_VERTICAL);
+
+        ImageView logo = new ImageView(this);
+        logo.setImageResource(R.drawable.logo_3ds);
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        logo.setContentDescription("3DS logo");
+        LinearLayout.LayoutParams logoParams = new LinearLayout.LayoutParams(dp(82), dp(58));
+        logoParams.rightMargin = dp(10);
+        headerRow.addView(logo, logoParams);
+
+        LinearLayout headerText = new LinearLayout(this);
+        headerText.setOrientation(LinearLayout.VERTICAL);
+        headerRow.addView(headerText, new LinearLayout.LayoutParams(0, -2, 1));
+
         TextView title = new TextView(this);
         title.setText("PackEnglish Mobile");
         title.setTextColor(COLOR_TEXT);
-        title.setTextSize(27);
+        title.setTextSize(23);
         title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        root.addView(title);
+        headerText.addView(title);
 
         TextView subtitle = new TextView(this);
         subtitle.setText("3DS file inspector • Android edition");
         subtitle.setTextColor(COLOR_MUTED);
-        subtitle.setTextSize(14);
+        subtitle.setTextSize(12);
         LinearLayout.LayoutParams subtitleParams = new LinearLayout.LayoutParams(-1, -2);
-        subtitleParams.topMargin = dp(5);
-        subtitleParams.bottomMargin = dp(20);
-        root.addView(subtitle, subtitleParams);
+        subtitleParams.topMargin = dp(4);
+        headerText.addView(subtitle, subtitleParams);
+
+        LinearLayout.LayoutParams headerParams = new LinearLayout.LayoutParams(-1, -2);
+        headerParams.bottomMargin = dp(18);
+        root.addView(headerRow, headerParams);
 
         Button chooseButton = new Button(this);
         chooseButton.setText("CHOOSE 3DS / CIA / CXI FILES");
