@@ -8,6 +8,10 @@ This is an independent Android implementation of a small part of the file-inspec
 
 The app includes a custom yellow-and-white 3DS wordmark in a bold, angular display style, used in the app header and launcher icon.
 
+## Theme and branding
+
+Version 1.2 uses a black, yellow, and white theme to match the 3DS logo: near-black background, dark charcoal cards, yellow primary action and section headings, white main text, and yellow-outlined export buttons.
+
 ## Features
 
 - Select one or multiple `.3ds`, `.cia`, and `.cxi` files using Android's document picker.
@@ -46,6 +50,11 @@ This version does **not**:
 - perform batch rebuilding.
 
 The app only performs basic structural inspection and raw partition copying. Use it only with files you own or homebrew files you are authorized to inspect. Respect the applicable copyright and terms for your files.
+
+## Current app version
+
+- Version name: `1.2`
+- Version code: `3`
 
 ## Download the APK from GitHub Actions
 
