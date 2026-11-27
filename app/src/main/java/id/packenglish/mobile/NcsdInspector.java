@@ -45,7 +45,7 @@ public final class NcsdInspector {
 
         if (hasMagic(header, 0x101, "NCSD") || hasMagic(header, 0x100, "NCSD")) {
             if (header.length < 0x160) {
-                return new Result("NCSD", "Header NCSD tidak lengkap.", partitions);
+                return new Result("NCSD", "Incomplete NCSD header.", partitions);
             }
             int tableOffset = 0x120;
             for (int i = 0; i < 8; i++) {
@@ -61,8 +61,8 @@ public final class NcsdInspector {
                 if (fileLength >= 0 && (offset > fileLength || length > fileLength - offset)) continue;
                 partitions.add(new Partition(i, offset, length));
             }
-            String desc = "Kontainer NCSD terdeteksi. Partisi valid yang tercatat: " + partitions.size()
-                    + ". Data partisi diekspor apa adanya; enkripsi tidak dibuka.";
+            String desc = "NCSD container detected. Valid partition entries: " + partitions.size()
+                    + ". Partition data is copied as-is; the app does not decrypt it.";
             return new Result("3DS / NCSD", desc, partitions);
         }
 
@@ -70,16 +70,16 @@ public final class NcsdInspector {
                 || lowerName.endsWith(".cxi")) {
             String desc;
             if (hasMagic(header, 0x101, "NCCH") || hasMagic(header, 0x100, "NCCH")) {
-                desc = "Header NCCH terdeteksi. Berkas dapat dibaca sebagai kontainer CXI/NCCH.";
+                desc = "NCCH header detected. The file can be read as a CXI/NCCH container.";
             } else {
-                desc = "Ekstensi CXI terdeteksi, tetapi signature NCCH tidak ditemukan pada posisi header umum.";
+                desc = "CXI extension detected, but no NCCH signature was found at the usual header offsets.";
             }
             return new Result("CXI / NCCH", desc, partitions);
         }
 
         if (lowerName.endsWith(".cia")) {
             if (header.length < 0x20) {
-                return new Result("CIA", "Header CIA terlalu pendek untuk diperiksa.", partitions);
+                return new Result("CIA", "CIA header is too short to inspect.", partitions);
             }
             long headerSize = u32le(header, 0x00);
             long certSize = u32le(header, 0x08);
@@ -87,27 +87,27 @@ public final class NcsdInspector {
             long tmdSize = u32le(header, 0x10);
             long metaSize = u32le(header, 0x14);
             long contentSize = u64leSafe(header, 0x18);
-            String contentText = contentSize < 0 ? "tidak terbaca" : humanBytes(contentSize);
+            String contentText = contentSize < 0 ? "unreadable" : humanBytes(contentSize);
             String desc = String.format(Locale.ROOT,
-                    "Header CIA terbaca. Header: 0x%X byte; certificate: %s; ticket: %s; TMD: %s; metadata: %s; area konten: %s.\nPemeriksaan ini hanya membaca ukuran, tidak mendekripsi atau membangun ulang konten.",
+                    "CIA header parsed. Header: 0x%X bytes; certificate: %s; ticket: %s; TMD: %s; metadata: %s; content area: %s.\nThis check only reads size fields; it does not decrypt or rebuild content.",
                     headerSize, humanBytes(certSize), humanBytes(ticketSize), humanBytes(tmdSize),
                     humanBytes(metaSize), contentText);
             return new Result("CIA", desc, partitions);
         }
 
-        return new Result("Tidak dikenal", "Signature NCSD/NCCH tidak ditemukan dan ekstensi bukan CIA.", partitions);
+        return new Result("Unknown", "No NCSD/NCCH signature was found, and the file extension is not CIA.", partitions);
     }
 
     public static void copyRange(InputStream input, java.io.OutputStream output,
                                  long offset, long length) throws IOException {
-        if (offset < 0 || length < 0) throw new IOException("Rentang berkas tidak valid.");
+        if (offset < 0 || length < 0) throw new IOException("Invalid file range.");
         skipFully(input, offset);
         byte[] buffer = new byte[64 * 1024];
         long remaining = length;
         while (remaining > 0) {
             int wanted = (int) Math.min(buffer.length, remaining);
             int read = input.read(buffer, 0, wanted);
-            if (read < 0) throw new IOException("Berkas sumber berakhir sebelum rentang selesai.");
+            if (read < 0) throw new IOException("The source file ended before the requested range was copied.");
             if (read == 0) continue;
             output.write(buffer, 0, read);
             remaining -= read;
@@ -124,7 +124,7 @@ public final class NcsdInspector {
                 continue;
             }
             int read = input.read(discard, 0, (int) Math.min(discard.length, remaining));
-            if (read < 0) throw new IOException("Tidak dapat mencapai offset partisi.");
+            if (read < 0) throw new IOException("Unable to reach the partition offset.");
             remaining -= read;
         }
     }
