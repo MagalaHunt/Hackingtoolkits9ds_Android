@@ -39,6 +39,11 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      # This empty, extensionless placeholder is not a valid Android drawable.
+      # Remove it from the CI checkout so aapt2 can merge resources.
+      - name: Remove invalid drawable placeholder
+        run: rm -f app/src/main/res/drawable/mhmm
+
       - name: Run parser smoke test
         run: bash tests/run_smoke_test.sh
 
