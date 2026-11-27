@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
         root.addView(subtitle, subtitleParams);
 
         Button chooseButton = new Button(this);
-        chooseButton.setText("PILIH FILE 3DS / CIA / CXI");
+        chooseButton.setText("CHOOSE 3DS / CIA / CXI FILES");
         chooseButton.setTextColor(Color.WHITE);
         chooseButton.setAllCaps(false);
         chooseButton.setTextSize(15);
@@ -95,8 +95,36 @@ public class MainActivity extends Activity {
         chooseButton.setOnClickListener(v -> openFilePicker());
         root.addView(chooseButton, new LinearLayout.LayoutParams(-1, dp(54)));
 
+        LinearLayout help = new LinearLayout(this);
+        help.setOrientation(LinearLayout.VERTICAL);
+        help.setPadding(dp(15), dp(13), dp(15), dp(13));
+        help.setBackground(roundRect(COLOR_CARD, 14));
+        LinearLayout.LayoutParams helpParams = new LinearLayout.LayoutParams(-1, -2);
+        helpParams.topMargin = dp(14);
+        root.addView(help, helpParams);
+
+        TextView helpTitle = new TextView(this);
+        helpTitle.setText("How to use");
+        helpTitle.setTextColor(COLOR_TEXT);
+        helpTitle.setTextSize(15);
+        helpTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        help.addView(helpTitle);
+
+        TextView helpBody = new TextView(this);
+        helpBody.setText("1. Tap the button above and select one or more .3ds, .cia, or .cxi files.\n"
+                + "2. Review the detected file type and inspection results below.\n"
+                + "3. For a 3DS / NCSD file, tap an Export partition button and choose where to save the .ncch file.\n"
+                + "4. Exported partition data is copied unchanged and may still be encrypted.\n\n"
+                + "Note: This version inspects CIA and CXI files but only exports valid NCCH partitions found in 3DS / NCSD files.");
+        helpBody.setTextColor(COLOR_MUTED);
+        helpBody.setTextSize(12);
+        helpBody.setLineSpacing(dp(3), 1.0f);
+        LinearLayout.LayoutParams helpBodyParams = new LinearLayout.LayoutParams(-1, -2);
+        helpBodyParams.topMargin = dp(7);
+        help.addView(helpBody, helpBodyParams);
+
         statusText = new TextView(this);
-        statusText.setText("Belum ada file dipilih.");
+        statusText.setText("No files selected yet.");
         statusText.setTextColor(COLOR_MUTED);
         statusText.setTextSize(13);
         LinearLayout.LayoutParams statusParams = new LinearLayout.LayoutParams(-1, -2);
@@ -117,14 +145,14 @@ public class MainActivity extends Activity {
         root.addView(note, noteParams);
 
         TextView noteTitle = new TextView(this);
-        noteTitle.setText("Batasan versi ini");
+        noteTitle.setText("Limitations");
         noteTitle.setTextColor(COLOR_TEXT);
         noteTitle.setTextSize(15);
         noteTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         note.addView(noteTitle);
 
         TextView noteBody = new TextView(this);
-        noteBody.setText("Aplikasi ini memeriksa header NCSD/NCCH/CIA dan dapat menyalin partisi NCCH mentah dari file 3DS. Data yang diekspor tetap apa adanya dan mungkin masih terenkripsi. Tidak ada pembukaan enkripsi, pengambilan kunci, ekstraksi ROMFS/banner, atau rebuild. Gunakan hanya file milik sendiri atau homebrew yang boleh kamu olah.");
+        noteBody.setText("This app performs read-only NCSD/NCCH/CIA header inspection and can copy raw NCCH partitions from 3DS files. Exported data is copied unchanged and may still be encrypted. This version does not decrypt content, retrieve or use keys, extract ROMFS/banner data, or rebuild files. Only inspect files you own or homebrew files you are authorized to use.");
         noteBody.setTextColor(COLOR_MUTED);
         noteBody.setTextSize(12);
         noteBody.setLineSpacing(dp(3), 1.0f);
@@ -133,7 +161,7 @@ public class MainActivity extends Activity {
         note.addView(noteBody, bodyParams);
 
         TextView footer = new TextView(this);
-        footer.setText("Offline • Tidak mengunggah file ke internet");
+        footer.setText("Offline • Files are never uploaded to the internet");
         footer.setTextColor(COLOR_MUTED);
         footer.setTextSize(11);
         footer.setGravity(Gravity.CENTER);
@@ -192,7 +220,7 @@ public class MainActivity extends Activity {
     private void scanFiles(List<Uri> selected) {
         records.clear();
         resultsContainer.removeAllViews();
-        statusText.setText("Memeriksa " + selected.size() + " file...");
+        statusText.setText("Scanning " + selected.size() + (selected.size() == 1 ? " file..." : " files..."));
         executor.execute(() -> {
             ArrayList<FileRecord> scanned = new ArrayList<>();
             for (Uri uri : selected) {
@@ -202,11 +230,11 @@ public class MainActivity extends Activity {
                     record.name = queryName(uri);
                     record.size = querySize(uri);
                     try (InputStream input = getContentResolver().openInputStream(uri)) {
-                        if (input == null) throw new IOException("Tidak dapat membuka file.");
+                        if (input == null) throw new IOException("Unable to open file.");
                         record.result = NcsdInspector.inspect(input, record.size, record.name);
                     }
                 } catch (Exception e) {
-                    record.error = e.getMessage() == null ? "Gagal membaca file." : e.getMessage();
+                    record.error = e.getMessage() == null ? "Failed to read file." : e.getMessage();
                 }
                 scanned.add(record);
             }
@@ -222,10 +250,11 @@ public class MainActivity extends Activity {
         resultsContainer.removeAllViews();
         int recognized = 0;
         for (FileRecord record : records) {
-            if (record.result != null && !"Tidak dikenal".equals(record.result.kind)) recognized++;
+            if (record.result != null && !"Unknown".equals(record.result.kind)) recognized++;
             resultsContainer.addView(makeRecordCard(record));
         }
-        statusText.setText("Selesai: " + records.size() + " file diperiksa, " + recognized + " format dikenali.");
+        statusText.setText("Scan complete: " + records.size() + (records.size() == 1 ? " file" : " files")
+                + " scanned, " + recognized + (recognized == 1 ? " format" : " formats") + " recognized.");
     }
 
     private View makeRecordCard(FileRecord record) {
@@ -238,14 +267,14 @@ public class MainActivity extends Activity {
         card.setLayoutParams(cardParams);
 
         TextView name = new TextView(this);
-        name.setText(record.name == null ? "File tanpa nama" : record.name);
+        name.setText(record.name == null ? "Unnamed file" : record.name);
         name.setTextColor(COLOR_TEXT);
         name.setTextSize(15);
         name.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         card.addView(name);
 
         TextView meta = new TextView(this);
-        meta.setText(record.size >= 0 ? NcsdInspector.humanBytes(record.size) : "Ukuran tidak tersedia");
+        meta.setText(record.size >= 0 ? NcsdInspector.humanBytes(record.size) : "Size unavailable");
         meta.setTextColor(COLOR_MUTED);
         meta.setTextSize(12);
         LinearLayout.LayoutParams metaParams = new LinearLayout.LayoutParams(-1, -2);
@@ -258,11 +287,11 @@ public class MainActivity extends Activity {
         detail.setLineSpacing(dp(3), 1.0f);
         String detailText;
         if (record.error != null) {
-            detailText = "Tidak dapat diperiksa: " + record.error;
+            detailText = "Could not inspect: " + record.error;
         } else if (record.result != null) {
             detailText = record.result.kind + "\n" + record.result.description;
         } else {
-            detailText = "Tidak ada hasil pemeriksaan.";
+            detailText = "No inspection results.";
         }
         detail.setText(detailText);
         LinearLayout.LayoutParams detailParams = new LinearLayout.LayoutParams(-1, -2);
@@ -271,7 +300,7 @@ public class MainActivity extends Activity {
 
         if (record.result != null && !record.result.partitions.isEmpty()) {
             TextView partitionTitle = new TextView(this);
-            partitionTitle.setText("Partisi NCCH terdeteksi");
+            partitionTitle.setText("Detected NCCH partitions");
             partitionTitle.setTextColor(COLOR_TEXT);
             partitionTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
             partitionTitle.setTextSize(12);
@@ -284,7 +313,7 @@ public class MainActivity extends Activity {
                 exportButton.setAllCaps(false);
                 exportButton.setTextColor(Color.WHITE);
                 exportButton.setTextSize(12);
-                exportButton.setText("Ekspor partisi " + partition.index + " • " + NcsdInspector.humanBytes(partition.length));
+                exportButton.setText("Export partition " + partition.index + " • " + NcsdInspector.humanBytes(partition.length));
                 exportButton.setBackground(roundRect(Color.rgb(49, 78, 112), 10));
                 LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(-1, dp(46));
                 buttonParams.topMargin = dp(7);
@@ -307,20 +336,20 @@ public class MainActivity extends Activity {
     }
 
     private void exportPartition(FileRecord record, NcsdInspector.Partition partition, Uri destination) {
-        statusText.setText("Mengekspor partisi " + partition.index + "...");
+        statusText.setText("Exporting partition " + partition.index + "...");
         executor.execute(() -> {
             String error = null;
             try (InputStream input = getContentResolver().openInputStream(record.uri);
                  OutputStream output = getContentResolver().openOutputStream(destination, "w")) {
-                if (input == null || output == null) throw new IOException("Tidak dapat membuka sumber atau tujuan.");
+                if (input == null || output == null) throw new IOException("Unable to open the source or destination.");
                 NcsdInspector.copyRange(input, output, partition.offset, partition.length);
                 output.flush();
             } catch (Exception e) {
-                error = e.getMessage() == null ? "Ekspor gagal." : e.getMessage();
+                error = e.getMessage() == null ? "Export failed." : e.getMessage();
             }
             final String resultMessage = error == null
-                    ? "Partisi berhasil disalin apa adanya."
-                    : "Ekspor gagal: " + error;
+                    ? "Partition exported unchanged."
+                    : "Export failed: " + error;
             mainHandler.post(() -> {
                 statusText.setText(resultMessage);
                 Toast.makeText(this, resultMessage, Toast.LENGTH_LONG).show();
